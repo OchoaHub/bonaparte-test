@@ -42,25 +42,27 @@ module Catalog
 
     def aplicaciones_rows
       @records.map do |record|
-        [
-          record.reference,
-          record.brand,
-          record.description,
-          nil,
-          nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
-        ]
+        pad_row(
+          [record.reference, record.brand, record.description],
+          SheetHeaders::APLICACIONES.size
+        )
       end
+    end
+
+    def pad_row(values, column_count)
+      values + Array.new(column_count - values.length, nil)
     end
 
     def intercambios_rows
       @records.map do |record|
+        marca = record.brand
         [
           record.reference,
-          record.brand,
+          marca,
           record.description,
           record.part_number,
-          record.brand,
-          record.brand
+          marca,
+          marca
         ]
       end
     end
