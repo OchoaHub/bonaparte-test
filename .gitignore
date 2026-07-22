@@ -4,7 +4,9 @@
 *.gem
 *.rbc
 
-# Rails (cuando se genere la app)
+# Rails
+/db/*.sqlite3
+/db/*.sqlite3-*
 /log/*
 /tmp/*
 !/log/.keep
@@ -31,3 +33,6 @@
 # Output generado por la prueba (no commitear entregables finales si son grandes)
 /output/*.xlsx
 !/output/.keep
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
