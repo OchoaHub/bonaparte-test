@@ -1,0 +1,12 @@
+<h1>Catalogación de refacciones</h1>
+
+<p>Sube el Excel de origen (<code>prueba_tecnica.xlsx</code>) para generar el catálogo con cuatro hojas.</p>
+
+<% if flash[:alert].present? %>
+  <p style="color: #b00020;"><%= flash[:alert] %></p>
+<% end %>
+
+<%= form_with url: catalog_path, method: :post, multipart: true, local: true do |form| %>
+  <%= form.file_field :file, accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", required: true %>
+  <%= form.submit "Generar catálogo" %>
+<% end %>
