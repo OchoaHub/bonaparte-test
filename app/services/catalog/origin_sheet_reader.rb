@@ -14,10 +14,13 @@ module Catalog
 
     def call
       sheet = Roo::Spreadsheet.open(@path).sheet(SHEET_NAME)
+      enforce_row_bounds!(sheet)
+
       header_row = sheet.row(1).map { |cell| cell.to_s.strip }
       indices = column_indices(header_row)
 
-      (2..sheet.last_row).filter_map do |row_number|
+      last_row = [sheet.last_row.to_i, WorkbookBoundsValidator::MAX_ORIGEN_ROWS].min
+      (2..last_row).filter_map do |row_number|
         row = sheet.row(row_number)
         sku = cell_value(row, indices[:sku])
         next if sku.blank?
@@ -50,6 +53,12 @@ module Catalog
     def cell_value(row, index)
       value = row[index]
       value.nil? ? "" : value.to_s.strip
+    end
+
+    def enforce_row_bounds!(sheet)
+      return if sheet.last_row.to_i <= WorkbookBoundsValidator::MAX_ORIGEN_ROWS
+
+      raise WorkbookBoundsValidator::LimitExceeded, WorkbookBoundsValidator::OVERSIZE_ALERT
     end
   end
 end

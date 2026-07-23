@@ -32,6 +32,8 @@ module Catalog
         filename: FILENAME,
         content_type: CONTENT_TYPE
       }
+    rescue WorkbookBoundsValidator::LimitExceeded => e
+      { ok: false, alert: e.message }
     rescue StandardError => e
       Rails.logger.error("Catalog generation failed: #{e.message}")
       { ok: false, alert: "No se pudo generar el catálogo. Verifica el formato del archivo." }
