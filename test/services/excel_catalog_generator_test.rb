@@ -35,6 +35,7 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
     assert_equal "Meistersatz", origen.row(2)[1]
     assert_equal "96353002", origen.row(2)[2].to_s
     assert_equal "JUNTA TAPA DE PUNTERIAS", origen.row(2)[3]
+    assert_origen_cells_stored_as_text(output)
     assert_no_blank_data_rows(origen, "Origen")
     assert_no_blank_data_rows(workbook.sheet(workbook.sheets.last), "Catálogo")
   ensure
@@ -63,6 +64,16 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
     (2..sheet.last_row).each do |row_number|
       row = sheet.row(row_number).map { |cell| cell.to_s.strip }
       refute row.all?(&:empty?), "expected no blank rows, found empty row #{row_number} in #{sheet_name}"
+    end
+  end
+
+  def assert_origen_cells_stored_as_text(path)
+    sheet_xml = Zip::File.open(path).read("xl/worksheets/sheet1.xml")
+    doc = Nokogiri::XML(sheet_xml)
+    ns = { "m" => "http://schemas.openxmlformats.org/spreadsheetml/2006/main" }
+
+    doc.xpath("//m:sheetData/m:row[position()>1]/m:c[starts-with(@r, 'A') or starts-with(@r, 'C')]", ns).each do |cell|
+      assert_not_equal "n", cell["t"], "expected text cells for SKU and part number, got numeric #{cell['r']}"
     end
   end
 end

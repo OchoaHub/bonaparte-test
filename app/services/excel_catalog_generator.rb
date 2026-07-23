@@ -72,22 +72,22 @@ class ExcelCatalogGenerator
     origen_rows, aplicaciones_rows, intercambios_rows, catalogo_rows = build_rows
 
     workbook.add_worksheet(name: "Origen") do |sheet|
-      sheet.add_row(ORIGEN_HEADERS)
+      add_row_as_text(sheet, ORIGEN_HEADERS)
       add_compact_rows(sheet, origen_rows)
     end
 
     workbook.add_worksheet(name: "Aplicaciones") do |sheet|
-      sheet.add_row(APLICACIONES_HEADERS)
-      aplicaciones_rows.each { |row| sheet.add_row(row) }
+      add_row_as_text(sheet, APLICACIONES_HEADERS)
+      aplicaciones_rows.each { |row| add_aplicaciones_row(sheet, row) }
     end
 
     workbook.add_worksheet(name: "Intercambios") do |sheet|
-      sheet.add_row(INTERCAMBIOS_HEADERS)
-      intercambios_rows.each { |row| sheet.add_row(row) }
+      add_row_as_text(sheet, INTERCAMBIOS_HEADERS)
+      intercambios_rows.each { |row| add_row_as_text(sheet, row) }
     end
 
     workbook.add_worksheet(name: "Catálogo") do |sheet|
-      sheet.add_row(CATALOGO_HEADERS)
+      add_row_as_text(sheet, CATALOGO_HEADERS)
       add_compact_rows(sheet, catalogo_rows)
     end
 
@@ -242,8 +242,34 @@ class ExcelCatalogGenerator
     rows.each do |row|
       next if row_blank?(row)
 
-      sheet.add_row(row)
+      add_row_as_text(sheet, row)
     end
+  end
+
+  def add_row_as_text(sheet, row)
+    values = row.map { |cell| cell.nil? ? "" : cell.to_s }
+    sheet.add_row(values, types: Array.new(values.length, :string))
+  end
+
+  def add_aplicaciones_row(sheet, row)
+    types = row.each_with_index.map do |value, index|
+      case index
+      when 7
+        value.is_a?(Integer) ? :integer : :string
+      when 8, 9, 10, 11
+        numeric_cell_type(value)
+      else
+        :string
+      end
+    end
+    sheet.add_row(row, types: types)
+  end
+
+  def numeric_cell_type(value)
+    return :integer if value.is_a?(Integer)
+    return :float if value.is_a?(Float)
+
+    :string
   end
 
   def row_blank?(row)
