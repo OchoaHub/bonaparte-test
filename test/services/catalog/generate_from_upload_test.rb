@@ -31,6 +31,14 @@ module Catalog
       File.binwrite(output, result[:data])
       workbook = Roo::Spreadsheet.open(output)
       assert_equal ["Origen", "Aplicaciones", "Intercambios", "Catálogo"], workbook.sheets
+
+      origen = workbook.sheet("Origen")
+      catalogo = workbook.sheet(workbook.sheets.last)
+      assert_equal 6, origen.last_row
+      assert_equal 6, catalogo.last_row
+      (2..origen.last_row).each do |row_number|
+        refute origen.row(row_number).map { |cell| cell.to_s.strip }.all?(&:empty?)
+      end
     ensure
       File.delete(output) if defined?(output) && output && File.exist?(output)
     end

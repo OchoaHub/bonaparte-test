@@ -1,12 +1,12 @@
-<h1>Catalogación de refacciones</h1>
+<h1 class="page-title">Catalogación de refacciones</h1>
 
-<p>Sube el Excel de origen (<code>prueba_tecnica.xlsx</code>) para generar el catálogo con las hojas Origen, Aplicaciones, Intercambios y Catálogo.</p>
+<p class="page-lead">Sube el Excel de origen (<code>prueba_tecnica.xlsx</code>) para generar el catálogo con las hojas Origen, Aplicaciones, Intercambios y Catálogo.</p>
 
 <% if flash[:alert].present? %>
-  <p style="color: #b00020;"><%= flash[:alert] %></p>
+  <div class="flash flash--alert" role="alert"><%= flash[:alert] %></div>
 <% end %>
 
-<%= form_with url: catalog_path, method: :post, multipart: true, local: true do |form| %>
+<%= form_with url: catalog_path, method: :post, multipart: true, local: true, html: { class: "upload-form" } do |form| %>
   <%= form.file_field :file, accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", required: true %>
-  <%= form.submit "Generar catálogo" %>
+  <%= form.submit "Generar catálogo", class: "btn-primary" %>
 <% end %>
