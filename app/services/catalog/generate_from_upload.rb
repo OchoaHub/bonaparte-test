@@ -24,7 +24,8 @@ module Catalog
       output_path = Rails.root.join("tmp", "catalog_output_#{SecureRandom.hex(8)}.xlsx").to_s
       File.binwrite(input_path, @upload.read)
 
-      CatalogPipeline.call(input_path: input_path, output_path: output_path)
+      WorkbookBoundsValidator.call!(path: input_path)
+      ExcelCatalogGenerator.new(input_path).call(output_path)
 
       {
         ok: true,

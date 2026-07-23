@@ -3,6 +3,8 @@
 require "caxlsx"
 
 class ExcelCatalogGenerator
+  ORIGEN_HEADERS = Catalog::SheetHeaders::ORIGEN
+
   APLICACIONES_HEADERS = [
     "Referencia",
     "Marca",
@@ -67,7 +69,12 @@ class ExcelCatalogGenerator
   def build_package
     package = Axlsx::Package.new
     workbook = package.workbook
-    aplicaciones_rows, intercambios_rows, catalogo_rows = build_rows
+    origen_rows, aplicaciones_rows, intercambios_rows, catalogo_rows = build_rows
+
+    workbook.add_worksheet(name: "Origen") do |sheet|
+      sheet.add_row(ORIGEN_HEADERS)
+      origen_rows.each { |row| sheet.add_row(row) }
+    end
 
     workbook.add_worksheet(name: "Aplicaciones") do |sheet|
       sheet.add_row(APLICACIONES_HEADERS)
@@ -88,11 +95,27 @@ class ExcelCatalogGenerator
   end
 
   def build_rows
+    origen_rows = []
     aplicaciones_rows = []
     intercambios_rows = []
     catalogo_rows = []
 
-    read_skus.each do |sku|
+    entries = read_origin_entries
+    entries.each do |entry|
+      record = Catalog::PartExtractor.call(
+        sku: entry[:sku],
+        description: entry[:description],
+        brand: entry[:brand]
+      )
+      origen_rows << [
+        record.reference,
+        record.brand,
+        record.part_number,
+        record.description
+      ]
+    end
+
+    entries.map { |entry| entry[:sku] }.uniq.each do |sku|
       data = AutopartsMockService.lookup(sku)
       referencia = data[:referencia]
       marca = data[:marca]
@@ -141,19 +164,62 @@ class ExcelCatalogGenerator
       ]
     end
 
-    [aplicaciones_rows, intercambios_rows, catalogo_rows]
+    [origen_rows, aplicaciones_rows, intercambios_rows, catalogo_rows]
   end
 
-  def read_skus
-    sheet = Roo::Spreadsheet.open(@upload_path).sheet(0)
-    last_row = sheet.last_row.to_i
+  def read_origin_entries
+    sheet = origin_sheet
+    max_row = Catalog::WorkbookBoundsValidator::MAX_ORIGEN_ROWS
+    last_row = [sheet.last_row.to_i, max_row].min
     return [] if last_row < 2
 
-    skus = (2..last_row).filter_map do |row_number|
-      sku = sheet.cell(row_number, 1).to_s.strip
-      sku.presence
-    end
+    header_row = sheet.row(1).map { |cell| cell.to_s.strip }
+    indices = origin_column_indices(header_row)
 
-    skus.uniq
+    (2..last_row).filter_map do |row_number|
+      row = sheet.row(row_number)
+      sku = normalize_sku(origin_cell_value(row, indices[:sku]))
+      next unless sku
+
+      {
+        sku: sku,
+        description: origin_cell_value(row, indices[:description]),
+        brand: origin_cell_value(row, indices[:brand])
+      }
+    end
+  end
+
+  def origin_sheet
+    @origin_sheet ||= Roo::Spreadsheet.open(@upload_path).sheet(0)
+  end
+
+  def origin_column_indices(header_row)
+    sku_index = find_origin_column(header_row, "sku") || 0
+    description_index = find_origin_column(header_row, "description") || 1
+    brand_index = find_origin_column(header_row, "brand") || 2
+
+    { sku: sku_index, description: description_index, brand: brand_index }
+  end
+
+  def find_origin_column(header_row, name)
+    header_row.find_index { |header| header.casecmp?(name) }
+  end
+
+  def origin_cell_value(row, index)
+    value = row[index]
+    value.nil? ? "" : value.to_s.strip
+  end
+
+  def normalize_sku(value)
+    return if value.nil?
+
+    sku = if value.is_a?(Float) && value == value.truncate
+            value.truncate.to_s
+          elsif value.is_a?(Integer)
+            value.to_s
+          else
+            value.to_s.strip
+          end
+    sku.presence
   end
 end

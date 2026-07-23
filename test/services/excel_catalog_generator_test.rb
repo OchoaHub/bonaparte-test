@@ -7,7 +7,7 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
   INTERCAMBIOS_HEADERS = ExcelCatalogGenerator::INTERCAMBIOS_HEADERS
   CATALOGO_HEADERS = ExcelCatalogGenerator::CATALOGO_HEADERS
 
-  test "generates workbook with three sheets and mock-expanded rows" do
+  test "generates workbook with four sheets and mock-expanded rows" do
     input = file_fixture("prueba_tecnica.xlsx").to_s
     output = Rails.root.join("tmp/excel_catalog_generator_test.xlsx").to_s
 
@@ -15,8 +15,9 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
 
     workbook = Roo::Spreadsheet.open(output)
 
-    assert_equal ["Aplicaciones", "Intercambios", "Catálogo"], workbook.sheets
+    assert_equal ["Origen", "Aplicaciones", "Intercambios", "Catálogo"], workbook.sheets
 
+    assert_sheet(workbook, "Origen", Catalog::SheetHeaders::ORIGEN, 5)
     assert_sheet(workbook, "Aplicaciones", APLICACIONES_HEADERS, 10)
     assert_sheet(workbook, "Intercambios", INTERCAMBIOS_HEADERS, 16)
     assert_sheet(workbook, "Catálogo", CATALOGO_HEADERS, 5)
@@ -28,6 +29,12 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
     assert_equal "CHEVROLET", first_data_row[4]
     assert_equal "Chevy", first_data_row[5]
     assert_equal 2008, first_data_row[7]
+
+    origen = workbook.sheet("Origen")
+    assert_equal "96353002-FE", origen.row(2)[0]
+    assert_equal "Meistersatz", origen.row(2)[1]
+    assert_equal "96353002", origen.row(2)[2].to_s
+    assert_equal "JUNTA TAPA DE PUNTERIAS", origen.row(2)[3]
   ensure
     File.delete(output) if output && File.exist?(output)
   end
