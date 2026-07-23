@@ -73,7 +73,7 @@ class ExcelCatalogGenerator
 
     workbook.add_worksheet(name: "Origen") do |sheet|
       sheet.add_row(ORIGEN_HEADERS)
-      origen_rows.each { |row| sheet.add_row(row) }
+      add_compact_rows(sheet, origen_rows)
     end
 
     workbook.add_worksheet(name: "Aplicaciones") do |sheet|
@@ -88,7 +88,7 @@ class ExcelCatalogGenerator
 
     workbook.add_worksheet(name: "Catálogo") do |sheet|
       sheet.add_row(CATALOGO_HEADERS)
-      catalogo_rows.each { |row| sheet.add_row(row) }
+      add_compact_rows(sheet, catalogo_rows)
     end
 
     package
@@ -115,7 +115,12 @@ class ExcelCatalogGenerator
       ]
     end
 
-    entries.map { |entry| entry[:sku] }.uniq.each do |sku|
+    seen_skus = {}
+    entries.each do |entry|
+      sku = entry[:sku]
+      next if seen_skus[sku]
+
+      seen_skus[sku] = true
       data = AutopartsMockService.lookup(sku)
       referencia = data[:referencia]
       marca = data[:marca]
@@ -170,11 +175,10 @@ class ExcelCatalogGenerator
   def read_origin_entries
     sheet = origin_sheet
     max_row = Catalog::WorkbookBoundsValidator::MAX_ORIGEN_ROWS
-    last_row = [sheet.last_row.to_i, max_row].min
-    return [] if last_row < 2
-
     header_row = sheet.row(1).map { |cell| cell.to_s.strip }
     indices = origin_column_indices(header_row)
+    last_row = last_origin_data_row(sheet, indices, max_row)
+    return [] if last_row < 2
 
     (2..last_row).filter_map do |row_number|
       row = sheet.row(row_number)
@@ -190,19 +194,60 @@ class ExcelCatalogGenerator
   end
 
   def origin_sheet
-    @origin_sheet ||= Roo::Spreadsheet.open(@upload_path).sheet(0)
+    @origin_sheet ||= begin
+      book = Roo::Spreadsheet.open(@upload_path)
+      if book.sheets.any? { |name| name.casecmp?("origen") }
+        book.sheet("Origen")
+      else
+        book.sheet(0)
+      end
+    end
   end
 
   def origin_column_indices(header_row)
-    sku_index = find_origin_column(header_row, "sku") || 0
-    description_index = find_origin_column(header_row, "description") || 1
-    brand_index = find_origin_column(header_row, "brand") || 2
+    sku_index = find_origin_column(header_row, "sku") ||
+                find_origin_column(header_row, "referencia") ||
+                0
+    description_index = find_origin_column(header_row, "description") ||
+                        find_origin_column(header_row, "descripción operación") ||
+                        find_origin_column(header_row, "descripcion operacion") ||
+                        1
+    brand_index = find_origin_column(header_row, "brand") ||
+                  find_origin_column(header_row, "marca") ||
+                  2
 
     { sku: sku_index, description: description_index, brand: brand_index }
   end
 
   def find_origin_column(header_row, name)
-    header_row.find_index { |header| header.casecmp?(name) }
+    header_row.find_index do |header|
+      normalize_header(header) == normalize_header(name)
+    end
+  end
+
+  def normalize_header(header)
+    ActiveSupport::Inflector.transliterate(header.to_s.strip.downcase.delete("#")).squeeze(" ").strip
+  end
+
+  def last_origin_data_row(sheet, indices, max_row)
+    upper = [sheet.last_row.to_i, max_row].min
+    upper.downto(2) do |row_number|
+      row = sheet.row(row_number)
+      return row_number if normalize_sku(origin_cell_value(row, indices[:sku]))
+    end
+    1
+  end
+
+  def add_compact_rows(sheet, rows)
+    rows.each do |row|
+      next if row_blank?(row)
+
+      sheet.add_row(row)
+    end
+  end
+
+  def row_blank?(row)
+    row.all? { |cell| cell.nil? || cell.to_s.strip.empty? }
   end
 
   def origin_cell_value(row, index)

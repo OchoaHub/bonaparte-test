@@ -35,6 +35,8 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
     assert_equal "Meistersatz", origen.row(2)[1]
     assert_equal "96353002", origen.row(2)[2].to_s
     assert_equal "JUNTA TAPA DE PUNTERIAS", origen.row(2)[3]
+    assert_no_blank_data_rows(origen, "Origen")
+    assert_no_blank_data_rows(workbook.sheet(workbook.sheets.last), "Catálogo")
   ensure
     File.delete(output) if output && File.exist?(output)
   end
@@ -55,5 +57,12 @@ class ExcelCatalogGeneratorTest < ActiveSupport::TestCase
 
     assert_equal expected_headers, headers
     assert_equal expected_data_rows + 1, sheet.last_row
+  end
+
+  def assert_no_blank_data_rows(sheet, sheet_name)
+    (2..sheet.last_row).each do |row_number|
+      row = sheet.row(row_number).map { |cell| cell.to_s.strip }
+      refute row.all?(&:empty?), "expected no blank rows, found empty row #{row_number} in #{sheet_name}"
+    end
   end
 end
