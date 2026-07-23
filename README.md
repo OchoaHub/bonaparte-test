@@ -18,9 +18,6 @@ Invitación de evaluación técnica: el foco no es solo el archivo final, sino *
 | [`data/samples/prueba_tecnica.xlsx`](data/samples/prueba_tecnica.xlsx) | Entrada que debe procesar la app |
 | [`data/samples/prueba_tecnica_ejemplo.xlsx`](data/samples/prueba_tecnica_ejemplo.xlsx) | Formato y contenido objetivo (referencia) |
 
-- Análisis de hojas y columnas: [`docs/DATOS.md`](docs/DATOS.md)  
-- Plan y decisiones pendientes: [`docs/PLAN.md`](docs/PLAN.md)  
-
 ## Requisitos
 
 - Ruby **3.0.2** (ver `.ruby-version`)  
