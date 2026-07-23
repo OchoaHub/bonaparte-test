@@ -18,10 +18,6 @@ Invitación de evaluación técnica: el foco no es solo el archivo final, sino *
 | [`data/samples/prueba_tecnica.xlsx`](data/samples/prueba_tecnica.xlsx) | Entrada que debe procesar la app |
 | [`data/samples/prueba_tecnica_ejemplo.xlsx`](data/samples/prueba_tecnica_ejemplo.xlsx) | Formato y contenido objetivo (referencia) |
 
-- Análisis de hojas y columnas: [`docs/DATOS.md`](docs/DATOS.md)  
-- Plan y decisiones pendientes: [`docs/PLAN.md`](docs/PLAN.md)  
-- Alcance confirmado con Ruy: [`docs/RESPUESTAS_RUY.md`](docs/RESPUESTAS_RUY.md)  
-
 ## Requisitos
 
 - Ruby **3.0.2** (ver `.ruby-version`)  
@@ -51,8 +47,6 @@ Abre [http://localhost:3000](http://localhost:3000).
 1. Inicia el servidor (`bin/rails server`).
 2. En la página principal, sube [`data/samples/prueba_tecnica.xlsx`](data/samples/prueba_tecnica.xlsx).
 3. Descarga `catalogo_generado.xlsx` con las hojas `Origen`, `Aplicaciones`, `Intercambios` y `Catálogo`.
-
-Detalle de reglas y decisiones: [`docs/DECISIONES.md`](docs/DECISIONES.md).
 
 ## Tests
 
