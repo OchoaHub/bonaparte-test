@@ -42,6 +42,12 @@ bin/rails server
 
 Abre [http://localhost:3000](http://localhost:3000).
 
+## Uso
+
+1. Inicia el servidor (`bin/rails server`).
+2. En la página principal, sube [`data/samples/prueba_tecnica.xlsx`](data/samples/prueba_tecnica.xlsx).
+3. Descarga `catalogo_generado.xlsx` con las hojas `Origen`, `Aplicaciones`, `Intercambios` y `Catálogo`.
+
 ## Tests
 
 ```bash
@@ -52,9 +58,9 @@ bin/rails test
 
 - [x] Repo inicial, muestras y documentación  
 - [x] Scaffold Rails 7.0 (SQLite, importmap, sin Action Cable/Mailer/Storage/Mailbox)  
-- [ ] Lógica de transformación / enriquecimiento  
-- [ ] Generación de Excel de salida  
-- [ ] Flujo de entrega documentado para el evaluador  
+- [x] Lógica de transformación / enriquecimiento (5 registros, heurística local)  
+- [x] Generación de Excel de salida (roo + caxlsx)  
+- [x] Flujo web upload/descarga documentado  
 
 ## Stack actual
 
@@ -64,5 +70,6 @@ bin/rails test
 | DB | SQLite (`db/development.sqlite3`) |
 | JS | importmap-rails (sin Hotwire/Turbo por ahora) |
 | Servidor | Puma |
+| Excel | roo (lectura), caxlsx (escritura) |
 
 Salidas Excel generadas (cuando existan): carpeta `output/` (archivos `.xlsx` ignorados por git).
