@@ -18,13 +18,30 @@ module Catalog
       assert_equal GenerateFromUpload::CONTENT_TYPE, result[:content_type]
     end
 
+    test "returns xlsx with four sheets including Origen" do
+      file = Rack::Test::UploadedFile.new(
+        file_fixture("prueba_tecnica.xlsx"),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      )
+
+      result = GenerateFromUpload.call(upload: file)
+
+      assert result[:ok]
+      output = Rails.root.join("tmp/generate_from_upload_test_output.xlsx").to_s
+      File.binwrite(output, result[:data])
+      workbook = Roo::Spreadsheet.open(output)
+      assert_equal ["Origen", "Aplicaciones", "Intercambios", "Catálogo"], workbook.sheets
+    ensure
+      File.delete(output) if defined?(output) && output && File.exist?(output)
+    end
+
     test "returns alert when workbook exceeds bounds" do
       file = Rack::Test::UploadedFile.new(
         file_fixture("prueba_tecnica.xlsx"),
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       )
-      original = CatalogPipeline.method(:call)
-      CatalogPipeline.define_singleton_method(:call) do |**|
+      original = WorkbookBoundsValidator.method(:call!)
+      WorkbookBoundsValidator.define_singleton_method(:call!) do |**|
         raise WorkbookBoundsValidator::LimitExceeded, WorkbookBoundsValidator::OVERSIZE_ALERT
       end
 
@@ -33,7 +50,7 @@ module Catalog
       refute result[:ok]
       assert_equal WorkbookBoundsValidator::OVERSIZE_ALERT, result[:alert]
     ensure
-      CatalogPipeline.define_singleton_method(:call, original)
+      WorkbookBoundsValidator.define_singleton_method(:call!, original)
     end
   end
 end

@@ -46,7 +46,7 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 1. Inicia el servidor (`bin/rails server`).
 2. En la página principal, sube [`data/samples/prueba_tecnica.xlsx`](data/samples/prueba_tecnica.xlsx).
-3. Descarga `catalogo_generado.xlsx` con las hojas `Origen`, `Aplicaciones`, `Intercambios` y `Catálogo`.
+3. Descarga `catalogo_generado.xlsx` con las hojas `Origen`, `Aplicaciones`, `Intercambios` y `Catálogo` (Origen reformateado; resto enriquecido vía mock).
 
 ## Tests
 
@@ -58,7 +58,7 @@ bin/rails test
 
 - [x] Repo inicial, muestras y documentación  
 - [x] Scaffold Rails 7.0 (SQLite, importmap, sin Action Cable/Mailer/Storage/Mailbox)  
-- [x] Lógica de transformación / enriquecimiento (5 registros, heurística local)  
+- [x] Lógica de transformación / enriquecimiento (`AutopartsMockService` + `ExcelCatalogGenerator`)  
 - [x] Generación de Excel de salida (roo + caxlsx)  
 - [x] Flujo web upload/descarga documentado  
 
@@ -73,3 +73,14 @@ bin/rails test
 | Excel | roo (lectura), caxlsx (escritura) |
 
 Salidas Excel generadas (cuando existan): carpeta `output/` (archivos `.xlsx` ignorados por git).
+
+## Generación en código
+
+El upload web usa [`Catalog::GenerateFromUpload`](app/services/catalog/generate_from_upload.rb): valida el archivo, aplica [`WorkbookBoundsValidator`](app/services/catalog/workbook_bounds_validator.rb) y genera el Excel con [`ExcelCatalogGenerator`](app/services/excel_catalog_generator.rb) y [`AutopartsMockService`](app/services/autoparts_mock_service.rb).
+
+```ruby
+generator = ExcelCatalogGenerator.new("/ruta/al/prueba_tecnica.xlsx")
+generator.call # => ruta tmp del .xlsx
+# o
+generator.to_stream # => bytes para send_data
+```
